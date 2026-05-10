@@ -1,25 +1,26 @@
 @startuml
-!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-title Диаграмма контекста по внедрению интеллектуального домофона и шлагбаума
+title Диаграмма контекста: интеллектуальный домофон и шлагбаум
 
-Person(client,Собственник,Клиент)
+Person(owner, "Собственник", "Использует мобильное приложение для управления услугами ЖКУ и Умного дома")
 
-System(fw,Firewall)
-
-System_Boundary(propDev, Prop Development){
-    System(communalServices,"Группа сервисов ЖКУ")
+System_Boundary(propDev, "PropDevelopment") {
+    System(ownerServices, "Сервисы для собственников", "Мобильное приложение и backend ЖКУ. Хранят права доступа, согласия, привязку устройств к ЖК и историю операций")
 }
 
-System_Boundary(extProvider, Система Партнёра){
-    System_Ext(smartIntercom,"Интеллектуальный домофон" )
-    System_Ext(smartGate,"Интеллектуальный шлагбаум" )
+System_Boundary(partner, "Партнёр Умного дома") {
+    System_Ext(partnerPlatform, "Платформа Умного дома", "Управляет устройствами, видеопотоками, распознаванием лиц и номеров")
 }
 
-Rel(client,fw,"")
-Rel(fw,communalServices,"")
+System_Ext(smartIntercom, "Интеллектуальный домофон", "Камера, звонок, удалённое открытие, распознавание лица")
+System_Ext(smartGate, "Интеллектуальный шлагбаум", "Камера, управление шлагбаумом, распознавание номера автомобиля")
 
-Rel(communalServices,smartIntercom,"","")
-Rel(communalServices,smartGate,"","")
+Rel(owner, ownerServices, "Просматривает видео, отвечает на звонок, открывает дверь/шлагбаум, управляет согласиями и данными доступа", "HTTPS")
+Rel(ownerServices, partnerPlatform, "Передаёт команды, выдаёт краткоживущие токены на видеопоток, отвечает на запросы проверки доступа", "REST/Webhooks, OAuth 2.0/OIDC, mTLS")
+Rel(partnerPlatform, ownerServices, "Передаёт события устройств, результаты операций и запросы allow/deny для распознанных лиц/номеров", "Webhooks/REST, signed requests")
+Rel(partnerPlatform, smartIntercom, "Управляет домофоном и получает видеопоток/события звонков", "Протоколы партнёра")
+Rel(partnerPlatform, smartGate, "Управляет шлагбаумом и получает события распознавания номеров", "Протоколы партнёра")
 
+LAYOUT_WITH_LEGEND()
 @enduml
