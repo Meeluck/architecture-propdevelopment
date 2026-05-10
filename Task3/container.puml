@@ -1,0 +1,41 @@
+@startuml
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Диаграмма контейнера по внедрению интеллектуального домофона и шлагбаума
+
+Person(client,Собственник,Клиент)
+
+System(fw,Firewall)
+
+' tenant-core-app не указан, т.к. его не нужно доработатывать
+System_Boundary(propDev, Prop Development){
+    Container(mobApp, "Витрина сервисов для собственников" ,"Mobile app(iOS, Android)","Мобильные приложения для собственников")
+
+    Container(crm,"CRM","Kotlin, Spring Boot",Система управления данными собственников)
+    ContainerDb(crmDb,crm-tenant-db,PostgreSQL,"База данных CRM по собственникам")
+
+    Container(smartAcl,"Сервис интеграция с сервисами подрядчика","Kotlin, SpringBoot")
+    ContainerDb(smartAclDb,"БД сервиса интеграций",PostgreSQL,)
+
+    Rel(mobApp,smartAcl,,"REST,WS")
+
+    Rel(mobApp,crm,"Получение клиентских данных","REST")
+    Rel(crm,crmDb,,JDBC)
+
+    Rel(smartAcl,smartAclDb,JDBC)
+    Rel(smartAcl,crm,"REST")
+}
+
+Rel(client,fw," ")
+Rel(fw,mobApp," ")
+
+System_Boundary(extProvider, Система Партнёра){
+    Container_Ext(smartIntercom,"Интеллектуальный домофон","")
+    Container_Ext(smartGate,"Интеллектуальный шлагбаум","")
+}
+
+BiRel(smartAcl,smartGate,,"REST")
+BiRel(smartAcl,smartIntercom,,"REST")
+
+@enduml

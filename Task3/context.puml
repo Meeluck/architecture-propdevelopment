@@ -1,0 +1,25 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Диаграмма контекста по внедрению интеллектуального домофона и шлагбаума
+
+Person(client,Собственник,Клиент)
+
+System(fw,Firewall)
+
+System_Boundary(propDev, Prop Development){
+    System(communalServices,"Группа сервисов ЖКУ")
+}
+
+System_Boundary(extProvider, Система Партнёра){
+    System_Ext(smartIntercom,"Интеллектуальный домофон" )
+    System_Ext(smartGate,"Интеллектуальный шлагбаум" )
+}
+
+Rel(client,fw,"")
+Rel(fw,communalServices,"")
+
+Rel(communalServices,smartIntercom,"","")
+Rel(communalServices,smartGate,"","")
+
+@enduml
