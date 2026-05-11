@@ -50,39 +50,35 @@
 
 Для задания используется namespace `traffic-demo`. В нём разворачиваются четыре nginx pod и четыре Kubernetes Service:
 
-| Service/Pod | Метки | Назначение |
-| --- | --- | --- |
-| `front-end-app` | `app=front-end-app`, `role=front-end` | UI обычной пользовательской части. |
-| `back-end-api-app` | `app=back-end-api-app`, `role=back-end-api` | API обычной пользовательской части. |
-| `admin-front-end-app` | `app=admin-front-end-app`, `role=admin-front-end` | UI административной части. |
-| `admin-back-end-api-app` | `app=admin-back-end-api-app`, `role=admin-back-end-api` | API административной части. |
+| Service/Pod              | Метки                                                   | Назначение                          |
+| ------------------------ | ------------------------------------------------------- | ----------------------------------- |
+| `front-end-app`          | `app=front-end-app`, `role=front-end`                   | UI обычной пользовательской части.  |
+| `back-end-api-app`       | `app=back-end-api-app`, `role=back-end-api`             | API обычной пользовательской части. |
+| `admin-front-end-app`    | `app=admin-front-end-app`, `role=admin-front-end`       | UI административной части.          |
+| `admin-back-end-api-app` | `app=admin-back-end-api-app`, `role=admin-back-end-api` | API административной части.         |
 
 Сетевые политики описаны в файле `non-admin-api-allow.yaml`.
 
 Модель доступа:
 
-| Направление | Результат |
-| --- | --- |
-| `front-end` <-> `back-end-api` | Разрешено. |
+| Направление                                | Результат  |
+| ------------------------------------------ | ---------- |
+| `front-end` <-> `back-end-api`             | Разрешено. |
 | `admin-front-end` <-> `admin-back-end-api` | Разрешено. |
-| `front-end` -> `admin-back-end-api` | Запрещено. |
-| `admin-front-end` -> `back-end-api` | Запрещено. |
-| Pod без разрешённой `role` -> API-сервисы | Запрещено. |
+| `front-end` -> `admin-back-end-api`        | Запрещено. |
+| `admin-front-end` -> `back-end-api`        | Запрещено. |
+| Pod без разрешённой `role` -> API-сервисы  | Запрещено. |
 
 Изоляция сделана через `default-deny-all`: сначала весь входящий и исходящий трафик в namespace запрещается, затем отдельными правилами разрешаются только две нужные пары сервисов. Дополнительно разрешён egress к Kubernetes DNS, чтобы pod могли обращаться к service по имени.
 
 ## Файлы решения
 
-| Файл | Назначение |
-| --- | --- |
-| `01-deploy-apps.sh` | Создаёт namespace `traffic-demo`, четыре pod nginx и четыре service. |
-| `02-apply-network-policies.sh` | Применяет `non-admin-api-allow.yaml`. |
-| `03-verify-network-policies.sh` | Проверяет разрешённые и запрещённые направления трафика. |
-| `non-admin-api-allow.yaml` | NetworkPolicy-манифесты. |
-| `00-prerequisites.md` | Что нужно подготовить перед запуском. |
-| `01-deploy-apps-walkthrough.md` | Пошаговый разбор первого скрипта. |
-| `02-apply-network-policies-walkthrough.md` | Пошаговый разбор сетевых политик. |
-| `03-verify-network-policies-walkthrough.md` | Пошаговый разбор проверок. |
+| Файл                                        | Назначение                                                           |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `01-deploy-apps.sh`                         | Создаёт namespace `traffic-demo`, четыре pod nginx и четыре service. |
+| `02-apply-network-policies.sh`              | Применяет `non-admin-api-allow.yaml`.                                |
+| `03-verify-network-policies.sh`             | Проверяет разрешённые и запрещённые направления трафика.             |
+| `non-admin-api-allow.yaml`                  | NetworkPolicy-манифесты.                                             |
 
 ## Важное условие для проверки
 
@@ -108,12 +104,6 @@ minikube start --driver=docker --cni=calico
 ```
 
 ## Как запустить решение
-
-Перейдите в директорию задания:
-
-```bash
-cd /Users/alexandermilakov/Study/YA_Software_Architecture/SP_5/architecture-propdevelopment/Task5
-```
 
 Запустите скрипты по порядку:
 
@@ -187,5 +177,3 @@ kubectl -n traffic-demo run test-$RANDOM \
 ```bash
 ./03-verify-network-policies.sh
 ```
-
-Если в запрещённых сценариях получаете успешные HTTP-ответы, значит политики не применяются сетевым плагином. Проверьте, что Minikube запущен с `--cni=calico`.
