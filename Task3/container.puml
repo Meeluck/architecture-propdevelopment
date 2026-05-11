@@ -1,0 +1,50 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Диаграмма контейнеров: интеграция с сервисами Умного дома
+
+' skinparam linetype polyline
+
+skinparam BoxPadding 50
+skinparam ParticipantPadding 100
+
+Person(owner, "Собственник", "Пользователь мобильного приложения")
+System(firewall, "Firewall")
+
+System_Boundary(propDev, "PropDevelopment") {
+    Boundary(ownerServices,Сервисы для собственников){
+        Container(mobileApp, "Витрина сервисов для собственников", "Mobile app: iOS, Android", "Приложение собственника. Показывает устройства, звонки, видеопоток и команды открытия")
+        Container(crm, "CRM", "Kotlin, Spring Boot", "Система управления данными собственников")
+        ContainerDb(crmDb, "crm-tenant-db", "PostgreSQL", "База данных CRM по собственникам")
+
+        Container(smartHomeService, "smart-home-integration-app", "Kotlin, Spring Boot", "Фасад интеграции с партнёром: проверка прав, команды открытия, выдача токенов видеопотока, webhooks, аудит")
+        ContainerDb(smartHomeDb, "smart-home-integration-db", "PostgreSQL", "Согласия, настройки устройств, привязка partnerSubjectId, разрешённые автомобили, журналы операций")
+    }   
+    
+    Container(authService, "auth-service-1", "Kotlin, Spring Boot / OIDC", "Выдаёт и проверяет токены пользователей")
+
+    Rel_Left(mobileApp, authService, "Аутентификация собственника", "OIDC Authorization Code + PKCE")
+    Rel(mobileApp, smartHomeService, "Получение устройств, звонков, статусов и отправка команд открытия", "HTTPS REST/WebSocket, Bearer JWT")
+    Rel(mobileApp, crm, "Получение клиентских данных для текущих экранов", "HTTPS REST")
+    Rel_Left(smartHomeService, authService, "Проверка подписи токенов и scopes", "JWKS/OIDC")
+    Rel(smartHomeService, crm, "Получение минимальных данных собственника и контактной информации", "HTTPS REST")
+    Rel(crm, crmDb, "Читает/пишет данные собственников", "JDBC")
+    Rel(smartHomeService, smartHomeDb, "Хранит настройки интеграции, согласия и аудит", "JDBC")
+}
+
+System_Boundary(partner, "Партнёр Умного дома") {
+    Container_Ext(partnerPlatform, "Платформа Умного дома", "Partner API", "Управление домофонами/шлагбаумами, видеопотоки, распознавание лиц и номеров")
+    Container_Ext(smartIntercom, "Интеллектуальный домофон", "IoT device", "Звонок, камера, реле открытия, распознавание лица")
+    Container_Ext(smartGate, "Интеллектуальный шлагбаум", "IoT device", "Камера распознавания номера и контроллер шлагбаума")
+}
+
+Rel(owner, firewall, "Использует приложение", "HTTPS")
+Rel(firewall, mobileApp, "Доступ к мобильной витрине", "HTTPS")
+Rel_Up(smartHomeService, partnerPlatform, "Команды открытия, регистрация устройств, выдача/отзыв доступов, access-decision API", "REST, OAuth 2.0 Client Credentials, mTLS")
+Rel_Down(partnerPlatform, smartHomeService, "События звонков, статусы устройств, запросы allow/deny по лицу или номеру авто", "Webhooks/REST, signed payloads, mTLS")
+Rel(mobileApp, partnerPlatform, "Видеопоток по одноразовому токену, выданному smart-home-integration-app", "WebRTC/HTTPS over TLS")
+Rel(partnerPlatform, smartIntercom, "Управление, видеопоток и события распознавания", "Протоколы партнёра")
+Rel(partnerPlatform, smartGate, "Управление и события распознавания номера", "Протоколы партнёра")
+
+LAYOUT_WITH_LEGEND()
+@enduml
