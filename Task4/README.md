@@ -47,24 +47,18 @@ kubectl get nodes
 ### 2. Запустить скрипты в правильном порядке
 
 ```bash
-cd /Users/alexandermilakov/Study/YA_Software_Architecture/SP_5/architecture-propdevelopment/Task4
-
 ./01-create-users.sh
 ./02-create-roles.sh
 ./03-bind-users-roles.sh
 ```
 
-Скрипты идемпотентны: их можно запускать повторно, если нужно перепроверить результат.
-
-После `01-create-users.sh` появится директория `generated-users/` с приватными ключами и сертификатами учебных пользователей. Это локальные артефакты проверки, их не нужно добавлять в pull request.
+После `01-create-users.sh` появится директория `generated-users/` с приватными ключами и сертификатами учебных пользователей.
 
 ### 3. Проверить созданные namespace
 
 ```bash
 kubectl get namespaces owner-services crm smart-home data-platform finance security
 ```
-
-Ожидаемый результат: все шесть namespace существуют.
 
 ### 4. Проверить созданные роли
 
@@ -203,9 +197,3 @@ kubectl --context=maria.owner-dev@minikube -n smart-home get pods
 - `ivan.viewer` может смотреть pods;
 - `ivan.viewer` получает запрет при попытке посмотреть secrets;
 - `maria.owner-dev` может работать в namespace `smart-home`.
-
-Если context называется иначе, точное имя можно посмотреть командой:
-
-```bash
-kubectl config get-contexts
-```
